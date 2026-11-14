@@ -38,5 +38,31 @@ issue() {
 
 echo "== Identity A (JKS)"
 issue certs/jks jks-identity "JKS identity" 365
+openssl pkcs12 -export -name demo \
+  -inkey certs/jks/jks-identity.key -in certs/jks/jks-identity.crt -certfile certs/ca/ca.crt \
+  -out certs/jks/tmp.p12 -passout "pass:$PASS"
+keytool -importkeystore -noprompt \
+  -srckeystore certs/jks/tmp.p12 -srcstoretype PKCS12 -srcstorepass "$PASS" \
+  -destkeystore certs/jks/demo.jks -deststoretype JKS -deststorepass "$PASS" >/dev/null 2>&1
+keytool -importcert -noprompt -alias demo-ca -file certs/ca/ca.crt \
+  -keystore certs/jks/demo.jks -storepass "$PASS" >/dev/null 2>&1
+rm -f certs/jks/tmp.p12 certs/jks/jks-identity.key
 
-echo "Generating certificates done"
+echo "== Identity B (combined PEM: certificate + private key, leaf only)"
+issue certs/pem pem-identity "PEM identity" 358
+cat certs/pem/pem-identity.crt certs/pem/pem-identity.key > certs/pem/demo-host.pem
+chmod 400 certs/pem/demo-host.pem
+rm -f certs/pem/pem-identity.key
+
+fp() {
+  openssl x509 -in "$1" -noout -fingerprint -sha256 | cut -d= -f2;
+}
+
+{
+  echo "JKS $(fp certs/jks/jks-identity.crt)"
+  echo "PEM $(fp certs/pem/pem-identity.crt)"
+} > certs/fingerprint.txt
+
+echo
+echo "Done. Fingerprint (SHA-256):"
+cat certs/fingerprint.txt
