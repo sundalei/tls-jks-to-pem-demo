@@ -6,6 +6,17 @@
 # The two identities have different keys and certificates on purpose, so the
 # served fingerprint shows unambiguously which one the server is using.
 set -euo pipefail
+
+# Run a command without its normal noise; if it fails, show what it printed.
+quiet() {
+  local out
+  if ! out=$("$@" 2>&1); then
+    echo "ERROR: command failed: $*" >&2
+    echo "$out" >&2
+    return 1
+  fi
+}
+
 echo "$(dirname "$0")/.."
 
 PASS=changeit
@@ -20,32 +31,32 @@ subjectAltName=DNS:localhost,IP:127.0.0.1
 EOF
 
 echo "== Demo CA"
-openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+quiet openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
   -keyout certs/ca/ca.key -out certs/ca/ca.crt \
   -subj "/O=TLS Demo/CN=Demo Server CA" \
   -addext "basicConstraints=critical,CA:TRUE" \
-  -addext "keyUsage=critical,keyCertSign,cRLSign" 2>/dev/null
+  -addext "keyUsage=critical,keyCertSign,cRLSign"
 
 issue() {
   # issue <dir> <name> <OU> <days>
-  openssl req -newkey rsa:2048 -nodes \
+  quiet openssl req -newkey rsa:2048 -nodes \
     -keyout "$1/$2.key" -out "$1/$2.csr" \
-    -subj "/O=TLS Demo/OU=$3/CN=localhost" 2>/dev/null
-  openssl x509 -req -in "$1/$2.csr" -CA certs/ca/ca.crt -CAkey certs/ca/ca.key \
-    -CAcreateserial -days "$4" -extfile certs/leaf-ext.cnf -out "$1/$2.crt" 2>/dev/null
+    -subj "/O=TLS Demo/OU=$3/CN=localhost"
+  quiet openssl x509 -req -in "$1/$2.csr" -CA certs/ca/ca.crt -CAkey certs/ca/ca.key \
+    -CAcreateserial -days "$4" -extfile certs/leaf-ext.cnf -out "$1/$2.crt"
   rm -f "$1/$2.csr"
 }
 
 echo "== Identity A (JKS)"
 issue certs/jks jks-identity "JKS identity" 365
-openssl pkcs12 -export -name demo \
+quiet openssl pkcs12 -export -name demo \
   -inkey certs/jks/jks-identity.key -in certs/jks/jks-identity.crt -certfile certs/ca/ca.crt \
   -out certs/jks/tmp.p12 -passout "pass:$PASS"
-keytool -importkeystore -noprompt \
+quiet keytool -importkeystore -noprompt \
   -srckeystore certs/jks/tmp.p12 -srcstoretype PKCS12 -srcstorepass "$PASS" \
-  -destkeystore certs/jks/demo.jks -deststoretype JKS -deststorepass "$PASS" >/dev/null 2>&1
-keytool -importcert -noprompt -alias demo-ca -file certs/ca/ca.crt \
-  -keystore certs/jks/demo.jks -storepass "$PASS" >/dev/null 2>&1
+  -destkeystore certs/jks/demo.jks -deststoretype JKS -deststorepass "$PASS"
+quiet keytool -importcert -noprompt -alias demo-ca -file certs/ca/ca.crt \
+  -keystore certs/jks/demo.jks -storepass "$PASS"
 rm -f certs/jks/tmp.p12 certs/jks/jks-identity.key
 
 echo "== Identity B (combined PEM: certificate + private key, leaf only)"
@@ -55,7 +66,7 @@ chmod 400 certs/pem/demo-host.pem
 rm -f certs/pem/pem-identity.key
 
 fp() {
-  openssl x509 -in "$1" -noout -fingerprint -sha256 | cut -d= -f2;
+  openssl x509 -in "$1" -noout -fingerprint -sha256 | cut -d= -f2
 }
 
 {
