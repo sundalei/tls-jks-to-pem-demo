@@ -12,9 +12,13 @@ if [[ -z "$SCENARIO" || ! -d "config/$SCENARIO" ]]; then
 fi
 
 [[ -f certs/fingerprints.txt ]] || scripts/gen-certs.sh
-[[ -f target/tls-demo.jar ]] || mvn -q -DskipTests package
+[[ -f target/tls-demo.jar ]] || mvn -DskipTests package
 
 ARGS=("--spring.config.additional-location=file:./config/$SCENARIO/" "--server.port=${PORT:-8443}")
-# Scenarios 1x and 2x run against "today's jar", which
+# Scenarios 1x and 2x run against "today's jar", which has the keystore lines baked in.
+case "$SCENARIO" in
+  1*|2*) ARGS+=("--spring.profiles.active=legacy") ;;
+esac
 
-echo "Hello world"
+echo "Starting scenario $SCENARIO: java -jar target/tls-demo.jar ${ARGS[*]}"
+exec java -jar target/tls-demo.jar "${ARGS[@]}"

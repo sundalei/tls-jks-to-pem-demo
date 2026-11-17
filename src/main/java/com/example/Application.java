@@ -28,7 +28,9 @@ public class Application {
   @Bean
   ApplicationRunner showConfiguredSsl(Environment env) {
     return args -> {
-      log.info("Hello");
+      log.info(
+          "Configured server.ssl.key-store = {}",
+          env.getProperty("server.ssl.key-store", "(not set)"));
     };
   }
 }

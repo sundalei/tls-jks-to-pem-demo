@@ -61,6 +61,15 @@ scripts/verify.sh                 # terminal 2
 certificate, how many certificates the server sent, the result of a client
 trust check against the demo CA, and which identity is in use.
 
+To see TLS connection details with `curl`, trust the generated demo CA:
+
+```bash
+curl -v --cacert ./certs/ca/ca.crt https://localhost:8443/
+```
+
+The `-v` option prints connection and TLS details; `--cacert` lets `curl`
+verify the server certificate using the demo CA.
+
 Expected summary from `demo-all.sh`:
 
 ```text

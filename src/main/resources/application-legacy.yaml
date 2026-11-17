@@ -1,0 +1,8 @@
+# Packaged inside the jar, active only with the "legacy" profile.
+# It reproduces the jar AS IT IS TODAY: the keystore lines are baked in and
+# take their values from placeholders defined in the external properties file.
+# They cannot be removed from outside the jar, only overriden.
+server:
+  ssl:
+    key-store: ${user.keystore}
+    key-store-password: ${user.password}

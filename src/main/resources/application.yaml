@@ -1,3 +1,6 @@
 spring:
   application:
-    name: tls-jks-to-pem-demo
+    name: tls-demo
+
+server:
+  port: 8443
