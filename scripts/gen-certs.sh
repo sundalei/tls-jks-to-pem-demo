@@ -17,7 +17,7 @@ quiet() {
   fi
 }
 
-echo "$(dirname "$0")/.."
+cd "$(dirname "$0")/.."
 
 PASS=changeit
 rm -rf certs

@@ -3,6 +3,7 @@
 # Usage: scripts/run.sh <scenario>  e.g. scripts/run.sh 2-pem-over-jks
 # Then, in another terminal: scripts/verify.sh
 set -euo pipefail
+cd "$(dirname "$0")/.."
 
 SCENARIO="${1:-}"
 if [[ -z "$SCENARIO" || ! -d "config/$SCENARIO" ]]; then
