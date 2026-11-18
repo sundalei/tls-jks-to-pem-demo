@@ -31,6 +31,11 @@ public class Application {
       log.info(
           "Configured server.ssl.key-store = {}",
           env.getProperty("server.ssl.key-store", "(not set)"));
+      log.info(
+          "Configured server.ssl.bundle = {}", env.getProperty("server.ssl.bundle", "(not set)"));
+      log.info(
+          "Configured PEM certificate = {}",
+          env.getProperty("Spring.ssl.bundle.pem.gateway.keystore.certificate", "(not set)"));
     };
   }
 }
