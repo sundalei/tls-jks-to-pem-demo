@@ -1,8 +1,8 @@
 # TLS demo: from JKS keystore to PEM
 
-A minimal Spring Boot (WebFlux / Reactor Netty, the same embedded server as
-Spring Cloud Gateway) application that shows a server moving its TLS identity
-from a JKS keystore to a PEM file, in three steps.
+A minimal Spring Boot (Spring MVC, embedded Tomcat) application that shows a
+server moving its TLS identity from a JKS keystore to a PEM file, in three
+steps.
 
 It uses two different test identities, one packaged as a JKS and one as a
 single combined PEM file. Because their certificates differ, the fingerprint
@@ -32,9 +32,9 @@ starts, which shows the JKS is not opened once the bundle is configured.
 
 ## How the "jar with keystore lines" is modelled
 
-- `src/main/resources/application.properties` has no TLS identity settings.
+- `src/main/resources/application.yaml` has no TLS identity settings.
   This is the jar after cleanup.
-- `src/main/resources/application-legacy.properties` holds the two keystore
+- `src/main/resources/application-legacy.yaml` holds the two keystore
   lines. Activating the `legacy` profile reproduces the jar as it is today.
   `scripts/run.sh` activates it for scenarios 1x and 2x only.
 - Each scenario's external file lives in `scenarios/<scenario>/` and is loaded
@@ -50,7 +50,7 @@ starts, which shows the JKS is not opened once the bundle is configured.
 
 ## Run it
 
-Requirements: JDK 17+, Maven, `openssl`, `keytool`, `curl`, `bash`.
+Requirements: JDK 21+, Maven, `openssl`, `keytool`, `curl`, `bash`.
 
 ```bash
 scripts/gen-certs.sh      # creates ./certs (demo CA, JKS identity, PEM identity)
@@ -100,8 +100,10 @@ from what is described here; check `logs/<scenario>.log`.
   `server.ssl.key-store` options. The bundle taking precedence is observed
   behaviour; scenario 3 is the configuration the documentation supports.
 - **With a bundle, `server.ssl.ciphers`, `server.ssl.enabled-protocols` and
-  `server.ssl.protocol` are ignored.** Set them under
-  `spring.ssl.bundle.pem.<name>.options.*` instead.
+  `server.ssl.protocol` are ignored.** Set them on the bundle instead:
+  `spring.ssl.bundle.pem.<name>.options.ciphers`,
+  `spring.ssl.bundle.pem.<name>.options.enabled-protocols` and
+  `spring.ssl.bundle.pem.<name>.protocol`.
 - **The PEM identity is leaf-only.** The server sends one certificate, where
   the JKS sent two (leaf + CA). Clients must already trust the issuing CA.
   To send the chain as well, append the CA certificate to the file used for
@@ -115,9 +117,9 @@ from what is described here; check `logs/<scenario>.log`.
 
 ```text
 pom.xml
-src/main/java/demo/TlsDemoApplication.java
-src/main/resources/application.properties          jar config, no TLS identity
-src/main/resources/application-legacy.properties   today's jar: keystore lines
-scenarios/<scenario>/application.properties           external config per scenario
+src/main/java/com/example/Application.java
+src/main/resources/application.yaml          jar config, no TLS identity
+src/main/resources/application-legacy.yaml   today's jar: keystore lines
+scenarios/<scenario>/application.properties  external config per scenario
 scripts/gen-certs.sh   scripts/run.sh   scripts/verify.sh   scripts/demo-all.sh
 ```

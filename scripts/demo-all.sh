@@ -6,7 +6,12 @@ PORT="${PORT:-8443}"
 mkdir -p logs
 
 [[ -f certs/fingerprints.txt ]] || scripts/gen-certs.sh || exit 1
-[[ -f target/tls-demo.jar ]] || mvn -DskipTests package || exit 1
+# Always rebuild so the jar matches the Spring Boot version currently in pom.xml.
+mvn -q -DskipTests package || exit 1
+
+# Do not leave a server running if the script is interrupted (Ctrl-C).
+pid=""
+trap '[[ -n "$pid" ]] && kill "$pid" 2>/dev/null' EXIT
 
 #  scenario expected
 SCENARIOS=( "1-jks|JKS identity"
@@ -20,7 +25,12 @@ for entry in "${SCENARIOS[@]}"; do
   scenario="${entry%%|*}"; expected="${entry##*|}"
   echo
   echo "=================== $scenario ==================="
-  PORT="$PORT" scripts/run.sh "$scenario" > "logs/$scenario.log" 2>&1 &
+  # Something else already listening would be mistaken for our server.
+  if (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null; then
+    echo "ERROR: port $PORT is already in use. Stop that process or set PORT=..." >&2
+    exit 1
+  fi
+  SKIP_BUILD=1 PORT="$PORT" scripts/run.sh "$scenario" > "logs/$scenario.log" 2>&1 &
   pid=$!
 
   # Wait until the port answers or the process exits (max 60s).
@@ -34,15 +44,21 @@ for entry in "${SCENARIOS[@]}"; do
   if [[ "$up" == yes ]]; then
     result=$(scripts/verify.sh "$PORT" | tee /dev/stderr | sed -n 's/^RESULT: serving the //p')
   else
-    result="startup fails"
     echo "Server did not start. Last error lines from logs/$scenario.log:"
     grep -iE "password was incorrect|tampered|Caused by" "logs/$scenario.log" | tail -3
+    # Only a wrong keystore password counts; any other failure must not pass as expected.
+    if grep -q "password was incorrect" "logs/$scenario.log"; then
+      result="startup fails"
+    else
+      result="other failure"
+    fi
   fi
 
   kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
   # Make sure the port is free before the next scenario starts.
   for _ in $(seq 1 60); do
-    (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null || break;
+    (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null || break
+    sleep 1
   done
 
   [[ "$result" == "$expected" ]] && verdict="OK" || verdict="DIFFERENT"

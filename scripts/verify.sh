@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 PORT="${1:-8443}"
 
-out=$(echo | openssl s_client -connect "localhost:$PORT" -servername localhost -showcerts 2>/dev/null)
+out=$(echo | openssl s_client -connect "localhost:$PORT" -servername localhost -showcerts 2>/dev/null) || true
 if ! grep -q "BEGIN CERTIFICATE" <<<"$out"; then
   echo "RESULT: no TLS server answered on port $PORT"
   exit 2

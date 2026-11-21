@@ -28,9 +28,15 @@ public class Application {
   @Bean
   ApplicationRunner showConfiguredSsl(Environment env) {
     return args -> {
-      log.info(
-          "Configured server.ssl.key-store = {}",
-          env.getProperty("server.ssl.key-store", "(not set)"));
+      // ${user.keystore} may be undefined once the PEM bundle is in use; logging must not fail
+      // startup in that case.
+      String keyStore;
+      try {
+        keyStore = env.getProperty("server.ssl.key-store", "(not set)");
+      } catch (IllegalArgumentException e) {
+        keyStore = "(unresolvable: " + e.getMessage() + ")";
+      }
+      log.info("Configured server.ssl.key-store = {}", keyStore);
       log.info(
           "Configured server.ssl.bundle = {}", env.getProperty("server.ssl.bundle", "(not set)"));
       log.info(

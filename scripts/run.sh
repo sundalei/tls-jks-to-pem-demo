@@ -13,7 +13,9 @@ if [[ -z "$SCENARIO" || ! -d "scenarios/$SCENARIO" ]]; then
 fi
 
 [[ -f certs/fingerprints.txt ]] || scripts/gen-certs.sh
-[[ -f target/tls-demo.jar ]] || mvn -DskipTests package
+# Always rebuild (cheap when nothing changed) so a pom.xml edit is never tested
+# with a stale jar. demo-all.sh builds once and sets SKIP_BUILD=1.
+[[ -n "${SKIP_BUILD:-}" ]] || mvn -q -DskipTests package
 
 ARGS=("--spring.config.additional-location=file:./scenarios/$SCENARIO/" "--server.port=${PORT:-8443}")
 # Scenarios 1x and 2x run against "today's jar", which has the keystore lines baked in.
