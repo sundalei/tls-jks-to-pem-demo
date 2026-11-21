@@ -17,5 +17,39 @@ SCENARIOS=( "1-jks|JKS identity"
 
 summary=()
 for entry in "${SCENARIOS[@]}"; do
-  echo $entry
+  scenario="${entry%%|*}"; expected="${entry##*|}"
+  echo
+  echo "=================== $scenario ==================="
+  PORT="$PORT" scripts/run.sh "$scenario" > "logs/$scenario.log" 2>&1 &
+  pid=$!
+
+  # Wait until the port answers or the process exits (max 60s).
+  up=no
+  for _ in $(seq 1 60); do
+    if ! kill -0 "$pid" 2>/dev/null; then break; fi
+    if (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null; then up=yes; break; fi
+    sleep 1;
+  done
+
+  if [[ "$up" == yes ]]; then
+    result=$(scripts/verify.sh "$PORT" | tee /dev/stderr | sed -n 's/^RESULT: serving the //p')
+  else
+    result="startup fails"
+    echo "Server did not start. Last error lines from logs/$scenario.log:"
+    grep -iE "password was incorrect|tampered|Caused by" "logs/$scenario.log" | tail -3
+  fi
+
+  kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+  # Make sure the port is free before the next scenario starts.
+  for _ in $(seq 1 60); do
+    (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null || break;
+  done
+
+  [[ "$result" == "$expected" ]] && verdict="OK" || verdict="DIFFERENT"
+  summary+=("$(printf '%-34s | %-14s | %-14s | %s' "$scenario" "$expected" "$result" "$verdict")")
 done
+
+echo
+echo "=================== Summary ==================="
+printf '%-34s | %-14s | %-14s | %s\n' "Scenario" "Expected" "Observed" "Match"
+printf '%s\n' "${summary[@]}"
