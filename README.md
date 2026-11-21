@@ -37,7 +37,7 @@ starts, which shows the JKS is not opened once the bundle is configured.
 - `src/main/resources/application-legacy.properties` holds the two keystore
   lines. Activating the `legacy` profile reproduces the jar as it is today.
   `scripts/run.sh` activates it for scenarios 1x and 2x only.
-- Each scenario's external file lives in `config/<scenario>/` and is loaded
+- Each scenario's external file lives in `scenarios/<scenario>/` and is loaded
   with `--spring.config.additional-location`, so it can add or override
   properties but cannot remove the ones in the jar.
 
@@ -111,6 +111,6 @@ pom.xml
 src/main/java/demo/TlsDemoApplication.java
 src/main/resources/application.properties          jar config, no TLS identity
 src/main/resources/application-legacy.properties   today's jar: keystore lines
-config/<scenario>/application.properties           external config per scenario
+scenarios/<scenario>/application.properties           external config per scenario
 scripts/gen-certs.sh   scripts/run.sh   scripts/verify.sh   scripts/demo-all.sh
 ```

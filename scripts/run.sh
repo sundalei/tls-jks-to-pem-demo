@@ -6,16 +6,16 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SCENARIO="${1:-}"
-if [[ -z "$SCENARIO" || ! -d "config/$SCENARIO" ]]; then
+if [[ -z "$SCENARIO" || ! -d "scenarios/$SCENARIO" ]]; then
   echo "Usage: scripts/run.sh <scenario>"
-  echo "Scenarios:"; ls config | sed 's/^/  /'
+  echo "Scenarios:"; ls scenarios | sed 's/^/  /'
   exit 1
 fi
 
 [[ -f certs/fingerprints.txt ]] || scripts/gen-certs.sh
 [[ -f target/tls-demo.jar ]] || mvn -DskipTests package
 
-ARGS=("--spring.config.additional-location=file:./config/$SCENARIO/" "--server.port=${PORT:-8443}")
+ARGS=("--spring.config.additional-location=file:./scenarios/$SCENARIO/" "--server.port=${PORT:-8443}")
 # Scenarios 1x and 2x run against "today's jar", which has the keystore lines baked in.
 case "$SCENARIO" in
   1*|2*) ARGS+=("--spring.profiles.active=legacy") ;;
