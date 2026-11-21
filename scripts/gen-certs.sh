@@ -76,4 +76,4 @@ fp() {
 
 echo
 echo "Done. Fingerprint (SHA-256):"
-cat certs/fingerprint.txt
+cat certs/fingerprints.txt

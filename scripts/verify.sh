@@ -28,3 +28,15 @@ esac
 # Trust check with a client that only knows the demo CA (leaf-only chains must still verify)
 # This means the client has no access to additional certificates and must trust the server
 # certificate using the demo CA alone, even when the server sends only its leaf certificate.
+if curl -s -o /dev/null --cacert certs/ca/ca.crt "https://localhost:$PORT/"; then
+  trust="verify ok"
+else
+  trust="VERIFY FAILED"
+fi
+
+echo "Subject            : $subject"
+echo "Expires            : $enddate"
+echo "SHA-256 fingerprint: $served"
+echo "Certificates sent  : $count"
+echo "Client trust check : $trust"
+echo "RESULT: serving the $identity"
