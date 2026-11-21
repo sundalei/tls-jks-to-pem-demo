@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs every scenario in turn, checks what the server serves, and prints a summary.
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit
 PORT="${PORT:-8443}"
 mkdir -p logs
 
