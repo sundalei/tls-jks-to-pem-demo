@@ -72,7 +72,7 @@ fp() {
 {
   echo "JKS $(fp certs/jks/jks-identity.crt)"
   echo "PEM $(fp certs/pem/pem-identity.crt)"
-} > certs/fingerprint.txt
+} > certs/fingerprints.txt
 
 echo
 echo "Done. Fingerprint (SHA-256):"

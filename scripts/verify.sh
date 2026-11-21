@@ -16,8 +16,8 @@ served=$(openssl x509 -noout -fingerprint -sha256 <<<"$out" | cut -d= -f2)
 subject=$(openssl x509 -noout -subject <<<"$out" | sed 's/^subject=//')
 enddate=$(openssl x509 -noout -enddate <<<"$out" | sed 's/^notAfter=//')
 
-jks=$(awk '$1=="JKS"{print $2}' certs/fingerprint.txt)
-pem=$(awk '$1=="PEM"{print $2}' certs/fingerprint.txt)
+jks=$(awk '$1=="JKS"{print $2}' certs/fingerprints.txt)
+pem=$(awk '$1=="PEM"{print $2}' certs/fingerprints.txt)
 
 case "$served" in
   "$jks") identity="JKS identity" ;;
