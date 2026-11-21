@@ -41,6 +41,13 @@ starts, which shows the JKS is not opened once the bundle is configured.
   with `--spring.config.additional-location`, so it can add or override
   properties but cannot remove the ones in the jar.
 
+> The folder is deliberately not named `config/`. Spring Boot automatically
+> loads `./config/application.properties` and `./config/*/application.properties`
+> from the working directory, so with a `config/` folder every scenario's file
+> would be merged into every run (for example, scenario 2's
+> `server.ssl.bundle=gateway` would leak into scenario 1 and make it serve the
+> PEM identity).
+
 ## Run it
 
 Requirements: JDK 17+, Maven, `openssl`, `keytool`, `curl`, `bash`.
